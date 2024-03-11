@@ -1,23 +1,24 @@
 package fr.erwan.utils;
 
 import java.io.*;
+import java.util.AbstractList;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.Objects;
-import java.util.Queue;
+/*
+* TODO/ Fonction pour découper un dossier volumineux en plusieurs fichier
+* */
 
 /**
- * Class de fonction utilitaire personalisé effectuant des opérations
- * sur les fichiers
+ * Class de fonction utilitaire personalisé effectuant des opérations sur les fichiers
  */
 public class FileUtils {
 
     /**
-     * Fonction static récursive pour copier des Folder et des Fichiers,
-     * la fonction gère l'intégrité de l'arborescence du folder.
-     * @param src Fichier ou Dossier source
-     * @param dest Dossier de destination
-     * @throws IOException
+     * Fonction récursive pour copier des dossiers et des fichiers,
+     * la fonction conserve l'intégrité de l'arborescence du dossier copié.
+     * @param src fichier source client
+     * @param dest fichier de destination
+     * @throws IOException problème de chemin de fichier, ou problème lors de l'écriture
      */
     public static void copyFolder(File src, File dest) throws IOException {
         if(src.isDirectory()){
@@ -42,15 +43,14 @@ public class FileUtils {
                     out.write(buffer, 0, len);
                 }
             }
-            System.out.println("Fini de copier le fichier : "+src);
+            System.out.println("Fini de copier le fichier : "+src+" -> dans :"+dest);
         }
     }
 
     /**
      * Coupe un dossier contenant plusieurs dossiers en plusieurs dossiers avec
      * uniquement des fichiers.
-     * @param src Doit être un Directory
-     * @return Liste de dossier
+     * @param src Doit être un dossier
      */
     public static void splitFoldersRec(File src, ArrayList<File> files){
         for(File file : Objects.requireNonNull(src.listFiles())) {
@@ -63,9 +63,25 @@ public class FileUtils {
     }
 
     /**
+     * Divise un dossier en liste de fichiers
+     * @param srcFolder fichier source client
+     */
+    public static void splitToFiles(File srcFolder,ArrayList<File> listFiles){
+        if(srcFolder.list() != null) {
+            for(File file : Objects.requireNonNull(srcFolder.listFiles())){
+                if(file.isDirectory()){
+                    splitToFiles(file,listFiles);
+                } else {
+                    listFiles.add(file);
+                }
+            }
+        }
+    }
+
+    /**
      * Teste si un fichier contient au moin un dossier
      * @param src fichier a tester
-     * @return boolean
+     * @return true si le dossier contient au moin un dossier false sinon
      */
     private static boolean containsFolder(File src){
         File[] list = src.listFiles();
@@ -76,4 +92,6 @@ public class FileUtils {
         }
         return false;
     }
+
+
 }

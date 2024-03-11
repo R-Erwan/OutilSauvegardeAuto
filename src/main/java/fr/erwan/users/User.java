@@ -6,6 +6,8 @@ import java.util.Objects;
 
 /**
  * Permet de gérer des utilisateurs et leur liste de fichiers à sauvegarder
+ * name : nom d'utilisateur qui unique*
+ * listFile : peut contenir des dossiers de n'importe quel structure, des fichiers, des dossiers de dossier...
  */
 public class User implements Serializable {
     private String name;
@@ -18,6 +20,11 @@ public class User implements Serializable {
         this.listFile = listFile;
     }
 
+    /**
+     * Constructeur qui instancie la liste des fichiers
+     * @param name nom unique
+     * @param password mot de passe pour se connecter
+     */
     public User(String name, String password){
         ArrayList<File> listFiles = new ArrayList<File>();
         this.name = name;
@@ -50,8 +57,8 @@ public class User implements Serializable {
     }
 
     /**
-     * Sérialize un User
-     * @param destSer Chemin de dossier ou require le fichier de serialisation
+     * Sérialize un objet user
+     * @param destSer emplacement du fichier de sérialisation
      */
     public void write(String destSer){
         try {
@@ -69,11 +76,11 @@ public class User implements Serializable {
 
     /**
      * Deserialize un User
-     * @param srcSer Chemin du dossier du fichier sérializer
-     * @param userName Nom de l'utilisateur
-     * @return User
+     * @param srcSer emplacement du fichier sérialisé
+     * @param userName nom de l'utilisateur
+     * @return objet User désérialisé
      */
-    public static User read(String srcSer,String userName){
+    public static User read(String srcSer,String userName) throws IOException{
         User u = null;
         try {
             FileInputStream fis = new FileInputStream(srcSer + userName+".ser");
@@ -81,30 +88,44 @@ public class User implements Serializable {
             u = (User) ois.readObject();
             fis.close();
             ois.close();
-        } catch (ClassNotFoundException e) {
-            System.out.println("User class not found");
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (ClassNotFoundException e){
             e.printStackTrace();
         }
         return u;
     }
 
     /**
-     * Ajoute des fichiers à la liste des fichiers à garder en sauvegarde
-     * Verifie l'existence du fichier
+     * Ajoute un fichier à la liste des fichiers à garder en sauvegarde.
+     * Vérifie l'existence du fichier.
      * @param fileClient fichier à sauvegarder
-     * @return boolean
+     * @throws FileNotFoundException si le fichier spécifié n'existe pas
      */
     public void addFileToSave(File fileClient) throws FileNotFoundException {
         if(!fileClient.exists()) {
             throw new FileNotFoundException("Fichier client introuvable");
         } else {
-            this.listFile.add(fileClient);
-
+            if(this.listFile.contains(fileClient)){
+                System.out.println("Ce fichier est déja dans la liste des fichiers a sauvegardé");
+            } else {
+                this.listFile.add(fileClient);
+            }
         }
     }
 
+    /**
+     * Ajoute une liste de fichier à sauvegarder
+     * @param filesClient ArrayList de plusieurs fichiers à garder en sauvegarde
+     * @throws FileNotFoundException si un des fichiers de la liste n'existe pas
+     */
+    public void addFileToSave(ArrayList<File> filesClient) throws FileNotFoundException {
+        for(File file : filesClient){
+          this.addFileToSave(file);
+        }
+    }
+
+    /**
+     * Nettoie la liste des fichiers utilisateurs à sauvegarder.
+     */
     public void clearFileToSave(){
         this.listFile.clear();
     }
