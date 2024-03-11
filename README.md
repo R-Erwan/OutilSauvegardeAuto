@@ -81,10 +81,25 @@ Simule le fonctionnement du programme :
 ## Comment exécuter le programme
 
 1. Assurez-vous d'avoir Java installé sur votre système.
-2. Clonez ce dépôt sur votre machine.
-3. Compilez le code source à l'aide de votre IDE préféré ou en utilisant la commande `javac`.
-4. Créer deux répertoire `TestSourceDirectory` et `TestDestDirectory` pour tester les Fonctionnalités.
-5. Exécutez la classe `Main` pour lancer le programme.
-
+2. Clonez ce dépôt sur votre machine dans un répertoire.
+3. Compilez le code source depuis le répertoire :
 ```bash
-$ java fr.erwan.Main
+javac -d classes src/main/java/fr/erwan/*.java src/main/java/fr/erwan/fileTools/*.java src/main/java/fr/erwan/users/*.java src/main/java/fr/erwan/utils/*.java
+```
+4. Copier le fichier _.properties_ :
+- **windows**
+```bash
+copy .\src\main\resources\application.properties classes
+```
+- **linux**
+```bash
+copy cp src/main/resources/application.properties classes
+```
+5. Créer deux répertoire `TestSourceDirectory` et 
+`TestDestDirectory` pour tester les Fonctionnalités.
+- Le dossier _Source_ doit contenir des fichiers a copié
+- Le dossier _Dest_contiendra les fichier sauvegardé
+6. Exécutez la classe `Main` pour lancer le programme.
+```bash
+java -cp classes fr.erwan.Main
+```
