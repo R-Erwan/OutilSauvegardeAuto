@@ -5,73 +5,81 @@ import java.io.IOException;
 import java.time.LocalDate;
 
 import static fr.erwan.utils.FileUtils.copyFolder;
+import static fr.erwan.utils.SystemUtils.getAppProperties;
 
-/* TODO - au lieu d'écrire dans un dossier local, envoyé les fichiers a un serveur, écrire dans un socket*/
 /**
- * Class qui instancie un thread de sauvegarde.
- * Les threads instanciés par cette class sont en attente sur une FWQ et s'occupent de sauvegarder les fichiers.
+ * Cette classe définit un thread de sauvegarde.
+ * Les threads créés par cette classe sont en attente sur une FileWaitingQueue (FWQ) et sont responsables de sauvegarder les fichiers.
  */
-public class FileSaver extends Thread{
-    private FileWaitingQueue fileWaitingQueue;
+public class FileSaver extends Thread {
+    private FileWaitingQueue fwq;
     private boolean stop;
     private String destDirectory;
 
     /**
-     * Constructeur de class
-     * @param destDirectory emplacement du dossier de destination
-     * @param fwq FileWaitingQueue
+     * Constructeur de la classe FileSaver.
+     * @param fwq La FileWaitingQueue sur laquelle le thread sera en attente.
+     * @param destDirectory L'emplacement du dossier de destination pour sauvegarder les fichiers.
      */
-    public FileSaver(FileWaitingQueue fwq,String destDirectory){
-        this.fileWaitingQueue = fwq;
+    public FileSaver(FileWaitingQueue fwq, String destDirectory) {
+        this.fwq = fwq;
         this.destDirectory = destDirectory;
         this.stop = false;
     }
 
-
     /**
-     * Cette méthode consulte la fwq et appelle la méthod copyFolder pour écrire
-     * les fichiers dans le répertoire distant.
+     * Cette méthode consulte la FileWaitingQueue (FWQ) et utilise la méthode copyFolder pour écrire les fichiers dans le répertoire distant.
      */
     @Override
-    public void run(){
-        while(!stop){
+    public void run() {
+        while (!stop) {
+            // Récupération d'un fichier à traiter
             File fileToSave = null;
             try {
-                fileToSave = this.fileWaitingQueue.takeFile();
+                fileToSave = this.fwq.get();
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                this.stop = true;
             }
-            try {
-                System.out.println(getName()+" s'occupe de copier le fichier : "+fileToSave.getName());
+            if (!stop) {
+                try {
+                    System.out.println(getName() + " s'occupe de copier le fichier : " + fileToSave.getName());
 
-                // NEW PART
-                File tmpFile = new File(destDirectory+fileToSave.getName());
+                    // Archivage
+                    File tmpFile = new File(destDirectory + fileToSave.getName());
+                    if (tmpFile.exists()) {
+                        String archivePath = "Archives/" +
+                                LocalDate.now().getYear() + "/" +
+                                LocalDate.now().getMonth().toString() + "/" +
+                                LocalDate.now().getDayOfMonth() + "/";
 
-                if(tmpFile.exists()){
-                    String archivePath = "Archives/"+
-                            LocalDate.now().getYear()+"/"
-                            +LocalDate.now().getMonth().toString()+"/"
-                            +LocalDate.now().getDayOfMonth()+"/";
+                        File newDir = new File(destDirectory + archivePath);
+                        newDir.mkdirs();
 
-                    File newDir = new File(destDirectory+archivePath);
-
-                    newDir.mkdirs();
-
-                    if(tmpFile.renameTo(new File(destDirectory+archivePath+fileToSave.getName()))){
-                        System.out.println("Fichier : "+tmpFile.getName()+" déplacer -> "+archivePath);
-                    } else {
-                        System.out.println("ERREUR lors de l'archivage");
+                        if (tmpFile.renameTo(new File(destDirectory + archivePath + fileToSave.getName()))) {
+                            System.out.println(this.getName()+ "Fichier : " + tmpFile.getName() + " archivé vers : " + archivePath);
+                        } else {
+                            System.out.println("ERREUR lors de l'archivage");
+                        }
                     }
-                }
-                // END NEW PART
 
-                copyFolder(fileToSave,new File(destDirectory+fileToSave.getName()));
-            } catch (IOException e){
-                /*
-                @Warning que ce passe-t-il si le programme s'interrompt et que le fichier n'a pas finis de ce copier ?
-                 */
-                e.printStackTrace();
+                    // Copie du fichier
+                    copyFolder(fileToSave, new File(destDirectory + fileToSave.getName()));
+                    //TODO : problème lorsque le programme s'interrompt au milieu de la copie d'un dossier
+                    this.fwq.remove(fileToSave);
+                    this.fwq.write(getAppProperties().getProperty("app.fwqSerializeFile"));
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
+    }
+
+    /**
+     * Méthode pour arrêter le thread.
+     */
+    public void arret() {
+        this.stop = true;
+        this.interrupt();
     }
 }

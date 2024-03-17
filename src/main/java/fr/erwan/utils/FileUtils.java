@@ -93,5 +93,40 @@ public class FileUtils {
         return false;
     }
 
+    /*
+        Affichage dossier en console
+     */
+
+    public static String stringifyDirectory(File file) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringifyDirectoryHelper(file, stringBuilder, 0, true);
+        return stringBuilder.toString();
+    }
+
+    private static void stringifyDirectoryHelper(File file, StringBuilder stringBuilder, int depth, boolean isFirst) {
+        if (file.isDirectory()) {
+            if (isFirst) {
+                stringBuilder.append("\u001B[32m"); // Green color ANSI escape code
+                isFirst = false;
+            }
+            stringBuilder.append(getIndent(depth)).append("[+] ").append(file.getName()).append("\u001B[0m\n"); // Reset color
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    stringifyDirectoryHelper(f, stringBuilder, depth + 1, false);
+                }
+            }
+        } else {
+            stringBuilder.append(getIndent(depth)).append("    ").append("|-- ").append(file.getName()).append("\n");
+        }
+    }
+
+    private static String getIndent(int depth) {
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < depth; i++) {
+            indent.append("    ");
+        }
+        return indent.toString();
+    }
 
 }

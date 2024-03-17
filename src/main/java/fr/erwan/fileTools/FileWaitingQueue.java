@@ -1,65 +1,29 @@
 package fr.erwan.fileTools;
 
-import java.io.*;
-import java.util.ResourceBundle;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-/* TODO : Gérer la sérialisation de la fwq*/
+import java.io.File;
 
 /**
- * FWQ BlockingQueue
- * File d'attente de fichier qui doivent être sauvegardé.
- * Le FileChecker incrémente cette file d'attente
- * Les FileSaver consulte cette file pour sauvegarder les fichiers
+ * Une file d'attente pour les objets de type File avec un mécanisme de sauvegarde.
  */
-public class FileWaitingQueue implements Serializable {
-    private BlockingQueue<File> files;
-
-    public FileWaitingQueue(){
-        this.files = new LinkedBlockingQueue<File>();
-    }
-
-    public void putFile(File file) throws InterruptedException {
-        files.put(file);
-    }
-
-    public File takeFile() throws InterruptedException {
-        return this.files.take();
-    }
+public class FileWaitingQueue extends LinkedListWithBackup<File>{
+    private String serFile;
 
     /**
-     * Serialize la FWQ dans un fichier passé dans le fichier de propriété application.properties
-     */
-    public void write(String dest){
-        try {
-            FileOutputStream fos = new FileOutputStream(dest+".ser");
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(this);
-            oos.close();
-            fos.close();
-        } catch (FileNotFoundException e){
-            e.printStackTrace();
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-    }
-
-    /**
+     * Constructeur prenant en paramètre le chemin de destination pour la sérialisation.
      *
-     * @param src
-     * @return
+     * @param serFile le chemin de destination pour la sérialisation
      */
-    public static FileWaitingQueue read(String src) throws IOException{
-        FileWaitingQueue fwq = null;
-        try {
-            FileInputStream fis = new FileInputStream(src+".ser");
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            fwq = (FileWaitingQueue) ois.readObject();
-            fis.close();
-            ois.close();
-        } catch (ClassNotFoundException e){
-            e.printStackTrace();
-        }
-        return fwq;
+    public FileWaitingQueue(String serFile){
+        super();
+        this.serFile = serFile;
+    }
+
+    /**
+     * Ajoute un fichier à la file d'attente et déclenche la sérialisation.
+     *
+     * @param file le fichier à ajouter
+     */
+    public synchronized void putAndSerialize(File file){
+        this.put(file,this.serFile);
     }
 }

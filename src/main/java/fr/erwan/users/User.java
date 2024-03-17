@@ -6,7 +6,7 @@ import java.util.Objects;
 
 /**
  * Permet de gérer des utilisateurs et leur liste de fichiers à sauvegarder
- * name : nom d'utilisateur qui unique*
+ * name : nom d'utilisateur unique*
  * listFile : peut contenir des dossiers de n'importe quel structure, des fichiers, des dossiers de dossier...
  */
 public class User implements Serializable {
@@ -68,6 +68,7 @@ public class User implements Serializable {
             oos.close();
             fos.close();
         } catch (FileNotFoundException e) {
+            System.err.println("Fichier de destination not found");
             throw new RuntimeException(e);
         } catch (IOException e) {
             e.printStackTrace();
