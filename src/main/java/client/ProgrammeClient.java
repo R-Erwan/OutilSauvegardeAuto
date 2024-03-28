@@ -8,8 +8,8 @@ import java.util.*;
 
 import static utils.SystemUtils.getProperties;
 
-//TODO : Chargement sauvegarde d'un fichier // Scenario de Test
-//TODO : review de code : Shell fait le 27/03
+//TODO : Chargement sauvegarde d'un fichier
+
 /**
  * La classe principale de l'application.
  * Elle initialise l'application et lance le shell utilisateur.
@@ -38,9 +38,7 @@ public class ProgrammeClient {
         }
         //Initialise l'application
         AppClient app = AppClient.InitApp();
-
         app.startApp();
-
 
         //Lance le shell
         ShellClient shellC = new ShellClient(app);
