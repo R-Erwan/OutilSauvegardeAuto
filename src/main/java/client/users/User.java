@@ -8,8 +8,8 @@ import java.util.Objects;
  * Cette classe est sérializable pour permettre la sauvegarde et la récupération des utilisateurs.
  */
 public class User implements Serializable {
-    private String name; //Nom de l'utilisateur
-    private String password; //Mot de passe a déclaré transient si on ne veut pas sauvegarder le mdp sur le pc de l'utilisateur
+    private final String name; //Nom de l'utilisateur
+    private final String password; //Mot de passe a déclaré transient si on ne veut pas sauvegarder le mdp sur le pc de l'utilisateur
 
     /**
      * Constructeur de la classe User.
@@ -22,10 +22,18 @@ public class User implements Serializable {
         this.password = password;
     }
 
+    /**
+     * Getter
+     * @return String nom de l'utilisateur
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Getter
+     * @return String mot de passe
+     */
     public String getPassword() {
         return password;
     }

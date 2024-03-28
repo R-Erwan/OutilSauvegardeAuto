@@ -5,7 +5,7 @@ import java.util.LinkedList;
 
 /**
  * Une file d'attente basée sur LinkedList avec un mécanisme de double file.
- * Lorsqu'un objet est pris de la queue, il est ajouté a la backupQueue.
+ * Lorsqu'un objet est pris de la queue, il est ajouté à la backupQueue.
  * Dès que le traitement sur l'objet est finis, il faut le supprimer de la backupQueue.
  *
  * @param <E> le type des éléments dans la file d'attente
@@ -26,11 +26,9 @@ public class LinkedListWithBackup<E> implements Serializable {
      * Ajoute un élément à la file d'attente principale et déclenche la sauvegarde.
      *
      * @param object   l'élément à ajouter
-     * @param destSer  le chemin de destination pour la sérialisation
      */
-    public synchronized void put(E object,String destSer) {
+    public synchronized void put(E object) {
         queue.add(object);
-        this.write(destSer);
         notifyAll();
     }
 
@@ -70,7 +68,7 @@ public class LinkedListWithBackup<E> implements Serializable {
      * Sérialise les files d'attente dans un fichier spécifié.
      * @param dest le chemin de destination pour la sérialisation
      */
-    public synchronized void write(String dest) {
+    public synchronized void write(String dest) throws IOException {
         try {
             FileOutputStream fos = new FileOutputStream(dest + "fwq.ser");
             ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -82,8 +80,8 @@ public class LinkedListWithBackup<E> implements Serializable {
 
             oos.close();
             fos.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new IOException("Erreur lors de la sérialisation de la LinkedListWithBackup");
         }
     }
 
@@ -91,8 +89,9 @@ public class LinkedListWithBackup<E> implements Serializable {
      * Désérialise les files d'attente depuis un fichier spécifié.
      * @param source le chemin source pour la deserialization
      * @throws FileNotFoundException si le fichier source est introuvable
+     * @throws IOException Erreur sur les flux
      */
-    public synchronized void read(String source) throws FileNotFoundException {
+    public synchronized void read(String source) throws IOException, ClassNotFoundException {
         try {
             FileInputStream fis = new FileInputStream(source + "fwq.ser");
             ObjectInputStream ois = new ObjectInputStream(fis);
@@ -110,9 +109,7 @@ public class LinkedListWithBackup<E> implements Serializable {
         } catch (FileNotFoundException e){
             throw new FileNotFoundException();
         }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
+
     }
 
     @Override

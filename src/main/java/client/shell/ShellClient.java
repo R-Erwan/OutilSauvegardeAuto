@@ -1,6 +1,6 @@
 package client.shell;
 
-import utils.ConstantColors;
+import utils.Colors;
 import client.fileTools.AppClient;
 
 import java.util.HashMap;
@@ -10,10 +10,10 @@ import java.util.Scanner;
  * Représente le shell de l'application client.
  * Ce shell permet à l'utilisateur d'interagir avec l'application en saisissant des commandes.
  */
-public class ShellClient extends Thread implements ConstantColors {
-    private AppClient app;
-    private Scanner scanner;
-    private Map<String, CommandHandler> commandHandlers;
+public class ShellClient extends Thread{
+    private final AppClient app;
+    private final Scanner scanner;
+    private final Map<String, CommandHandler> commandHandlers;
 
     /**
      * Constructeur de la classe ShellClient.
@@ -45,7 +45,7 @@ public class ShellClient extends Thread implements ConstantColors {
      * Cette méthode gère la boucle principale du shell, en attendant les commandes de l'utilisateur.
      */
     public void run(){
-        System.out.println(YELLOW + "Bienvenue dans le shell de la l'application"+RESET);
+        System.out.println(Colors.YELLOW + "Bienvenue dans le shell de la l'application"+Colors.RESET);
         boolean running = true;
         while(running){
             System.out.print("> ");
@@ -58,6 +58,7 @@ public class ShellClient extends Thread implements ConstantColors {
             if(handler != null){
                 boolean commandOut = handler.handleCommand(parts);
                 if(!commandOut){
+                    handler.displayHelp();
                     System.out.println("Arguments incorrect. Tapez 'help' pour afficher la liste des commandes disponible");
                 }
             } else {

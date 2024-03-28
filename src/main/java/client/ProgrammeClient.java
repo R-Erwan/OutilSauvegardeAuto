@@ -2,14 +2,14 @@ package client;
 
 import client.shell.ShellClient;
 
-import utils.ConstantColors;
 import client.fileTools.AppClient;
 
 import java.util.*;
 
 import static utils.SystemUtils.getProperties;
 
-//TODO : Chargement sauvegarde d'un fichier // Comment installer le pgme // REAMDE.MD file // Scenario de Test
+//TODO : Chargement sauvegarde d'un fichier // Scenario de Test
+//TODO : review de code : Shell fait le 27/03
 /**
  * La classe principale de l'application.
  * Elle initialise l'application et lance le shell utilisateur.
@@ -17,14 +17,13 @@ import static utils.SystemUtils.getProperties;
  * @author Erwan Roussel
  * @version 1.0
  */
-public class ProgrammeClient implements ConstantColors {
+public class ProgrammeClient {
 
 
     /**
      * La méthode principale de l'application.
      * Elle initialise l'application, détermine si c'est le premier lancement,
      * puis démarre l'application et le shell utilisateur.
-     *
      * @param args Les arguments de la ligne de commande.
      */
     public static void main(String[] args) throws Exception {

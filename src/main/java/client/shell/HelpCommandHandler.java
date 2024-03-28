@@ -1,5 +1,7 @@
 package client.shell;
 
+import utils.Colors;
+
 /**
  * Cette classe implémente l'interface CommandHandler pour gérer la commande "help".
  */
@@ -16,8 +18,7 @@ public class HelpCommandHandler implements CommandHandler {
             // La commande n'est pas correcte, ne pas traiter
             return false;
         }
-        displayHelp(0);
-
+        displayHelp();
         return true;
     }
 
@@ -25,19 +26,15 @@ public class HelpCommandHandler implements CommandHandler {
      * Affiche l'aide pour les commandes disponibles.
      */
     @Override
-    public void displayHelp(int n) {
+    public void displayHelp() {
         System.out.println("Liste des commandes disponibles :");
-        System.out.println("- "+CYAN+"help"+RESET+" : Afficher l'aide.");
-        System.out.println("- "+CYAN+"config"+RESET+" : Opérations sur la configuration de l'application.");
-        System.out.println("- "+CYAN+"process"+RESET+" : Opérations sur les fichier à sauvegarder");
-        System.out.println("- "+CYAN+"server"+RESET+" : Opérations nécessitant des requires au serveur");
-        System.out.println("- "+CYAN+"app stop"+RESET+" : Arrête le programme et le shell");
-        System.out.println("- "+CYAN+"app start"+RESET+" : Lance le programme");
-        System.out.println("- "+CYAN+"app check"+RESET+" : Lance un check des fichiers client");
-        System.out.println("- "+CYAN+"dev"+RESET+" : Commande de tests");
-
-
-
+        System.out.println("- "+ Colors.CYAN+"help"+Colors.RESET+" : Afficher l'aide.");
+        System.out.println("- "+Colors.CYAN+"config"+Colors.RESET+" : Opérations sur la configuration de l'application.");
+        System.out.println("- "+Colors.CYAN+"process"+Colors.RESET+" : Opérations sur les fichier à sauvegarder");
+        System.out.println("- "+Colors.CYAN+"server"+Colors.RESET+" : Opérations nécessitant des requires au serveur");
+        System.out.println("- "+Colors.CYAN+"dev"+Colors.RESET+" : Opérations de tests");
+        System.out.println("- "+Colors.CYAN+"app stop"+Colors.RESET+" : Arrête le programme et le shell");
+        System.out.println("- "+Colors.CYAN+"app check"+Colors.RESET+" : Lance un check des fichiers client");
 
         // Informations supplémentaires
         System.out.println("\nPour utiliser une commande, saisissez son nom suivi des arguments nécessaires.");

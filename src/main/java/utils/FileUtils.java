@@ -1,13 +1,8 @@
 package utils;
 
 import java.io.*;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-/*
-* TODO/ Fonction pour découper un dossier volumineux en plusieurs fichier
-* */
 
 /**
  * Class de fonction utilitaire personalisé effectuant des opérations sur les fichiers
@@ -45,6 +40,28 @@ public class FileUtils {
                 }
             }
         }
+    }
+
+    /**
+     * Fonction récursive liste les fichiers d'un répertoire
+     * @param directory répertoire
+     * @return Liste de tous les fichiers présents dans ce répertoire, en incluant les fichiers des sous-répertoires :
+     */
+    public static List<File> listFiles(File directory) {
+        List<File> fileList = new ArrayList<>();
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile()) {
+                        fileList.add(file);
+                    } else if (file.isDirectory()) {
+                        fileList.addAll(listFiles(file)); // Récursivité pour les sous-répertoires
+                    }
+                }
+            }
+        }
+        return fileList;
     }
 
     /**
@@ -89,11 +106,49 @@ public class FileUtils {
      * @return Une chaîne de caractères représentant l'indentation correspondante.
      */
     private static String getIndent(int depth) {
-        StringBuilder indent = new StringBuilder();
-        for (int i = 0; i < depth; i++) {
-            indent.append("    ");
+        return "    ".repeat(Math.max(0, depth));
+    }
+
+    /**
+     * Algorithme récursif qui sépare un dossier en plusieurs fichiers et crée des couples (Chemin - Fichier),
+     * en conservant un chemin relatif par rapport au dossier initial.
+     *
+     * @param dossier Répertoire contenant des fichiers et d'autres dossiers.
+     * @return Une ArrayList de couples (Chemin - Fichier).
+     */
+    public static ArrayList<Object[]> listerFichiers(File dossier) {
+        ArrayList<Object[]> files = new ArrayList<>();
+        listerFichiersRecursif(dossier, dossier.getName(), files);
+        return files;
+    }
+
+    /**
+     * Algorithme récursif pour parcourir les fichiers et les dossiers de manière récursive.
+     *
+     * @param dossier Dossier à parcourir.
+     * @param cheminRelatif Chemin relatif au dossier initial.
+     * @param files Liste pour stocker les couples (Chemin - Fichier).
+     */
+    private static void listerFichiersRecursif(File dossier, String cheminRelatif, ArrayList<Object[]> files) {
+        if (dossier.isDirectory()) {
+            File[] contenu = dossier.listFiles();
+            if (contenu != null) {
+                for (File element : contenu) {
+                    String cheminRelatifElement = cheminRelatif + File.separator + element.getName();
+                    if (element.isDirectory()) {
+                        // Rappel récursif pour explorer le contenu du sous-dossier
+                        listerFichiersRecursif(element, cheminRelatifElement, files);
+                    } else {
+                        // Ajouter la paire de chaîne de caractères et objet File à la liste
+                        Object[] pair = {cheminRelatifElement, element};
+                        files.add(pair);
+                    }
+                }
+            }
+        } else {
+            Object[] pair = {cheminRelatif, dossier};
+            files.add(pair);
         }
-        return indent.toString();
     }
 
 

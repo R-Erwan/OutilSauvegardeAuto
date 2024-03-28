@@ -1,11 +1,12 @@
 package server;
 
 import client.users.User;
-import utils.ConstantColors;
+import utils.Colors;
 import utils.FileUtils;
 
 import java.io.*;
 import java.net.Socket;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
@@ -15,7 +16,7 @@ import static utils.SystemUtils.getProperties;
  * La classe Client représente un client connecté au serveur.
  * Elle gère les communications avec le client et effectue les opérations demandées.
  */
-public class Client extends Thread implements ConstantColors {
+public class Client extends Thread {
     private final Socket socket; // Le socket du client
     private final ObjectInputStream sisr; // Flux d'entrée pour les objets
     private final ObjectOutputStream sisw; // Flux de sortie pour les objets
@@ -43,13 +44,14 @@ public class Client extends Thread implements ConstantColors {
     @Override
     public void run() {
         try {
+            // Le client doit d'abord authentifier un utilisateur pour effectuer d'autres requêtes
             if (authenticateUser()) {
                 logHandler.logMessage(user.getName(), "CONNECTED");
                 while (true) {
-                    Message message = (Message) sisr.readObject();
-                    System.out.println(YELLOW+user.getName()+RESET+" -> "+message.command+" : "+message.params);
-                    logHandler.logMessage(user.getName(), message.command + "  "+message.params);
-                    handleCommand(message);
+                    Message message = (Message) sisr.readObject(); //Attend un message
+                    System.out.println(Colors.YELLOW+user.getName()+ Colors.RESET+" -> "+message.command+" : "+message.params);
+                    logHandler.logMessage(user.getName(), message.command + "  "+message.params); //Log le message
+                    handleCommand(message); // Execute l'opération associée
                     if (message.command == Command.Stop) break;
                 }
                 logHandler.logMessage(user.getName(), "DISCONNECTED");
@@ -95,7 +97,7 @@ public class Client extends Thread implements ConstantColors {
      */
     private boolean authenticateUser() throws IOException, ClassNotFoundException {
         while (true) {
-            Message message = (Message) sisr.readObject();
+            Message message = (Message) sisr.readObject(); //Attend un message
             if (message.command == Command.Stop) return false;
 
             boolean authenticated = switch (message.command) {
@@ -103,7 +105,7 @@ public class Client extends Thread implements ConstantColors {
                 case ConnectUser -> loginUser(message.name, message.params);
                 default -> false;
             };
-            sisw.writeBoolean(authenticated);
+            sisw.writeBoolean(authenticated); //Renvoie si l'opération s'est bien passé
             sisw.flush();
             if (authenticated) return true;
         }
@@ -113,7 +115,7 @@ public class Client extends Thread implements ConstantColors {
      * Créer un nouvel utilisateur.
      * @param name Nom de l'utilisateur UNIQUE.
      * @param password Mot de passe.
-     * @return True si un nouvel utilisateur a été créer, False si l'utilisateur existe déja sur le server .
+     * @return True si un nouvel utilisateur a été créer, False si l'utilisateur existe déja sur le server.
      */
     private boolean signInUser(String name, String password) {
         User user = new User(name,password);
@@ -121,7 +123,7 @@ public class Client extends Thread implements ConstantColors {
         File userData = new File(getProperties("server").getProperty("server.usersData")+name+"/"+"Archives/");
 
         try {
-            //Si l'utilisateur existe deja
+            //Si un utilisateur avec le même nom existe déja
             if(userFile.exists()){
                 return false;
             }
@@ -171,13 +173,18 @@ public class Client extends Thread implements ConstantColors {
         String repDeSauvegarde = getProperties("server").getProperty("server.usersData")+user.getName()+"/";
 
         File file = new File(repDeSauvegarde+fileName);
+        //Si le fichier n'existe pas sur le serveur, on le crée
         if(!file.exists()){
             file.getParentFile().mkdirs();
             file.createNewFile();
-        } else {
+
+        }
+        //Sinon c'est que le fichier existe, donc on doit l'archivé
+        else {
             archiveFile(new File(fileName)); //On passe uniquement un chemin relatif au dossier parent
         }
 
+        //Écriture du fichier
         try (FileOutputStream fos = new FileOutputStream(repDeSauvegarde+fileName)) {
             byte[] buffer = new byte[8192];
             int bytesRead;
@@ -193,21 +200,31 @@ public class Client extends Thread implements ConstantColors {
      */
     private void archiveFile(File file){
         // file -> DossierX/../fichier.txt
+
+        String userPath = getProperties("server").getProperty("server.usersData")+
+                user.getName()+
+                File.separator;
+        //Server/Data/toto
+
         String archivePath = "Archives/" +
                 LocalDate.now().getYear() + "/" +
                 LocalDate.now().getMonth().toString() + "/" +
                 LocalDate.now().getDayOfMonth() + "/";
         // archivePath -> Archives/2024/March/24
 
-        String newPath = getProperties("server").getProperty("server.usersData")+
-                user.getName()+
-                File.separator+
-                archivePath;
+        if(file.getParent() != null){
+            File firstParent = new File(userPath + file.getParent().substring(0,file.getParent().indexOf('/')+1));
+            if(firstParent.exists()){
+                firstParent.setLastModified(Instant.now().toEpochMilli());
+            }
+        }
+
+        String newPath = userPath + archivePath;
         // newPath -> Server/Data/toto/Archives/2024/March/24/
 
         File newDir = new File(newPath + file.getParent()+"/");
         newDir.mkdirs();
-        // newDir -> Server/Data/toto/Archives/2024/March/24/DossierX/
+        // newDir -> Server/Data/toto/Archives/2024/March/24/DossierX/dossierY/...
 
         File fileToRename = new File(getProperties("server").getProperty("server.usersData")+
                 user.getName()+
@@ -275,8 +292,6 @@ public class Client extends Thread implements ConstantColors {
                     sisw.write(buffer,0,bytesRead);
                 }
                 sisw.flush();
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

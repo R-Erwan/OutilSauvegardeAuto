@@ -1,13 +1,13 @@
 package client.shell;
 
 import client.fileTools.AppClient;
+import utils.Colors;
 
 /**
  * Gère les commandes relatives à l'application client.
  */
 public class AppCommandHandler implements CommandHandler{
-    private AppClient app;
-
+    private final AppClient app;
     /**
      * Constructeur de la classe AppCommandHandler.
      *
@@ -26,16 +26,15 @@ public class AppCommandHandler implements CommandHandler{
     @Override
     public boolean handleCommand(String[] parts) {
         // Vérifier si la commande est valide
-        if ( (parts.length !=1 && parts.length !=2 )|| !parts[0].equalsIgnoreCase("app")) {
+        if ( (parts.length !=1 && parts.length !=2 ) || !parts[0].equalsIgnoreCase("app")) {
             return false;
         }
         if(parts.length == 1){
-            displayHelp(0);
-            return false;
+            displayHelp();
+            return true;
         } else {
             switch (parts[1]){
                 case "stop" -> app.stopApp();
-                case "start" -> app.startApp();
                 case "check" -> app.getfCheck().check();
             }
         }
@@ -44,15 +43,12 @@ public class AppCommandHandler implements CommandHandler{
 
     /**
      * Affiche l'aide pour les commandes relatives à l'application client.
-     *
-     * @param n Contrôle quelles informations d'aide sont affichées en fonction du contexte.
      */
     @Override
-    public void displayHelp(int n) {
-        System.out.println("- "+CYAN+"app"+RESET+" : Affiche ces informations.");
-        System.out.println("- "+CYAN+"app stop"+RESET+" : Arrête l'application correctement");
-        System.out.println("- "+CYAN+"app check"+RESET+" : Lance un check des fichiers a sauvegarder");
-        System.out.println("- "+CYAN+"app start"+RESET+" : @Deprecated lance l'application");
+    public void displayHelp() {
+        System.out.println("- "+Colors.CYAN+"app"+Colors.RESET+" : Affiche ces informations.");
+        System.out.println("- "+Colors.CYAN+"app stop"+Colors.RESET+" : Arrête l'application correctement");
+        System.out.println("- "+Colors.CYAN+"app check"+Colors.RESET+" : Lance un check des fichiers a sauvegarder");
 
     }
 }

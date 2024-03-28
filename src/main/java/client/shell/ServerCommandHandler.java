@@ -1,6 +1,7 @@
 package client.shell;
 
 import client.fileTools.AppClient;
+import utils.Colors;
 
 import java.io.IOException;
 
@@ -8,7 +9,7 @@ import java.io.IOException;
  * Gère les commandes relatives à l'application client.
  */
 public class ServerCommandHandler implements CommandHandler{
-    private AppClient app;
+    private final AppClient app;
 
     /**
      * Constructeur de la classe.
@@ -32,8 +33,8 @@ public class ServerCommandHandler implements CommandHandler{
             return false;
         }
         if(parts.length == 1){
-            displayHelp(0);
-            return false;
+            displayHelp();
+            return true;
         } else {
             switch (parts[1]){
                 case "listFile" -> {
@@ -41,7 +42,7 @@ public class ServerCommandHandler implements CommandHandler{
                         String response = app.getSc().getFileList();
                         System.out.println(response);
                     } catch (IOException e){
-                        e.printStackTrace();
+                        System.err.println("Erreur lors de la communication avec le serveur");
                     }
                 }
             }
@@ -51,15 +52,11 @@ public class ServerCommandHandler implements CommandHandler{
 
 
     /**
-     * Affiche l'aide pour les commandes relatives à l'application client.
-     *
-     * @param n Contrôle quelles informations d'aide sont affichées en fonction du contexte.
+     * Affiche l'aide pour les commandes relatives aux requêtes serveur.
      */
     @Override
-    public void displayHelp(int n) {
-        System.out.println("- "+CYAN+"server"+RESET+" : Affiche ces informations.");
-        System.out.println("- "+CYAN+"server listFile"+RESET+" : Liste tout les fichiers personnel présent sur le serveur");
-
-
+    public void displayHelp() {
+        System.out.println("- "+ Colors.CYAN+"server"+Colors.RESET+" : Affiche ces informations.");
+        System.out.println("- "+Colors.CYAN+"server listFile"+Colors.RESET+" : Liste tout les fichiers personnel présent sur le serveur");
     }
 }

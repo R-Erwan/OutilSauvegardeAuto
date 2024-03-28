@@ -1,10 +1,10 @@
 package client.fileTools;
 
-
-import utils.ConstantColors;
 import client.users.UserClient;
+import utils.Colors;
 import utils.SystemUtils;
 
+import java.awt.*;
 import java.io.*;
 import java.util.Properties;
 import java.util.Scanner;
@@ -14,14 +14,14 @@ import static utils.SystemUtils.getProperties;
 /**
  * La classe principale de l'application client.
  * Elle gère l'initialisation et le démarrage de l'application.
- * Pour lancer une application : InitApp -> StartApp
+ * Pour lancer une application : InitApp → StartApp
  */
-public class AppClient implements ConstantColors{
-    private UserClient userClient; // L'utilisateur de l'application
+public class AppClient{
+    private final UserClient userClient; // L'utilisateur de l'application
     private final FileWaitingQueue fwq; // La file d'attente des fichiers à sauvegarder
-    private FileChecker fCheck; // Le vérificateur de fichiers
-    private FileSaver fSaver; // Les sauvegardeurs de fichiers
-    private SocketConnection sc; // La connexion au serveur
+    private final FileChecker fCheck; // Le vérificateur de fichiers
+    private final FileSaver fSaver; // Le thread de sauvegarde
+    private final SocketConnection sc; // La connexion au serveur
     private boolean running;
 
     /**
@@ -39,25 +39,34 @@ public class AppClient implements ConstantColors{
         this.fSaver = new FileSaver(fwq,sc);
         this.running = false;
         this.sc=sc;
-        FileSaver fs = new FileSaver(fwq,sc);
     }
 
+    /**
+     * Getter Utilisateur courant
+     * @return UserClient
+     * @see client.users.User
+     * @see UserClient
+     */
     public UserClient getUser() {
         return userClient;
     }
 
+    public FileChecker getfCheck(){return fCheck;}
+
+    /**
+     * Getter File d'attente
+     * @return FileWaitingQueue
+     * @see LinkedListWithBackup
+     */
     public FileWaitingQueue getFwq() {
         return fwq;
     }
 
-    public FileChecker getfCheck() {
-        return fCheck;
-    }
-
-    public void setSc(SocketConnection sc) {
-        this.sc = sc;
-    }
-
+    /**
+     * Getter Connection serveur
+     * @return SocketConnection
+     * @see SocketConnection
+     */
     public SocketConnection getSc() {
         return sc;
     }
@@ -70,7 +79,7 @@ public class AppClient implements ConstantColors{
         System.out.println("Lancement de l'app Client");
         if (!running) {
             this.fSaver.start();
-            this.fCheck.check();
+            this.fCheck.start();
             this.running = true;
         }
     }
@@ -80,31 +89,47 @@ public class AppClient implements ConstantColors{
      * Elle arrête le thread de Sauvegarde, la connexion au serveur et sauvegarde la file d'attente.
      */
     public void stopApp() {
-        System.out.println("Arrêt de l'application...");
+        System.out.println("Arrêt de l'application");
         Properties prop = getProperties("application");
 
-        System.out.println("Arrêt du thread"+this.fSaver.getName());
-        fSaver.arret();
+        System.out.println("Arrêt du FileChecker");
+        this.fCheck.stopThread();
 
+        System.out.println("Arrêt du FileSaver "+this.fSaver.getName());
+        fSaver.arret();
         synchronized (fwq) {
             fwq.notifyAll();
         }
 
-        // Serialisation FWQ
-        this.fwq.write(prop.getProperty("app.fwqSerFile"));
-        System.out.println("File d'attente sauvegardé");
+        try {
+            this.fwq.write(prop.getProperty("app.fwqSerFile"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("File d'attente sauvegardé : "+ Colors.BLUE+fwq.toString()+Colors.RESET);
 
         try {
             this.fSaver.join();
         } catch (InterruptedException e) {
-            System.err.println("Erreur lors de l'attente des threads de sauvegarde");
-            e.printStackTrace();
+            System.err.println(fSaver.getName()+" interrupted !");
         }
-        System.out.println("Arrêt connexion serveur");
+
+        System.out.println("Arrêt de la connexion au serveur");
         this.sc.stopConnection();
 
         this.running = false;
-        System.out.println("Arrêt de l'application Client correcte !");
+        System.out.println("Arrêt de l'application Client...");
+    }
+
+    /**
+     * Met en pause le thread de sauvegarde.
+     *
+     * @param nbPause temps de pause du thread en seconde.
+     * @see FileSaver
+     */
+    public void pauseSave(int nbPause){
+        this.fSaver.setPause(nbPause);
+        this.fSaver.interrupt();
     }
 
 
@@ -113,7 +138,7 @@ public class AppClient implements ConstantColors{
      * @return L'application client initialisée.
      */
     public static AppClient InitApp(){
-        System.out.println(YELLOW+"==========Initialisation de l'application=========="+RESET);
+        System.out.println(Colors.YELLOW+"==========Initialisation de l'application=========="+Colors.RESET);
         Properties prop = getProperties("application");
 
         //USER
@@ -122,10 +147,10 @@ public class AppClient implements ConstantColors{
         UserClient userClient;
         try{
             userClient = UserClient.read(userFile,userName);
-            System.out.println(GREEN+"Informations utilisateurs récupéré"+RESET);
+            System.out.println(Colors.GREEN+"Informations utilisateurs récupéré"+Colors.RESET);
             System.out.println("Bienvenue "+ userClient.getName());
         } catch (IOException e){
-            System.err.println("Erreur lors de la récupération du fichier utilisateur, relancer l'application");
+            System.err.println("Le fichier utilisateur a été supprimer, relancer l'application");
             prop.setProperty("app.firstLaunch","true");
             SystemUtils.storeAppProperties(prop); //Enregistre les config
             throw new RuntimeException();
@@ -151,19 +176,22 @@ public class AppClient implements ConstantColors{
         try {
             fwq.read(fwqFile);
         } catch (FileNotFoundException e){
-            System.err.println("pas de file d'attente sauvegardé précédemment");
+            System.err.println("Pas de file d'attente précédemment sauvegardé");
+        } catch (Exception e){
+            throw new RuntimeException();
         }
 
         //FILE CHECKER
         double freq = Double.parseDouble(prop.getProperty("app.freq"));
-        FileChecker fCheck = new FileChecker(fwq,userClient,freq,sc);
+        double refresh = Double.parseDouble(prop.getProperty("app.refresh"));
+        FileChecker fCheck = new FileChecker(fwq,userClient,freq,sc,refresh);
 
-        //APP
+        //APPColors.
 
         AppClient app = new AppClient(fwq,fCheck,userClient,sc);
 
         System.out.println("Tout c'est bien passé, application prête");
-        System.out.println(YELLOW+"==================================================="+RESET);
+        System.out.println(Colors.YELLOW+"==================================================="+Colors.RESET);
 
         return app;
     }
@@ -173,12 +201,12 @@ public class AppClient implements ConstantColors{
      * puis en entrant les premiers paramètres de configuration.
      */
     public static void createFirstApp(){
-        installFile();
+        installFile(); //Créer les dossiers nécessaires.
 
         Scanner sc = new Scanner(System.in);
         boolean isOk = false;
 
-        System.out.println(YELLOW+"Commençons la configuration de l'application"+RESET);
+        System.out.println(Colors.YELLOW+"Configuration de l'application"+Colors.RESET);
         //PROP
         Properties prop = getProperties("application");
         int freq = 24;
@@ -193,7 +221,7 @@ public class AppClient implements ConstantColors{
             System.out.print("> mot de passe :");
             String password = sc.nextLine().trim();
 
-            System.out.println("Valider vous ces informations : "+YELLOW+userName+" -> "+password+RESET+" ?");
+            System.out.println("Valider vous ces informations : "+Colors.YELLOW+userName+" -> "+password+Colors.RESET+" ?");
             System.out.print("> O/N : ");
             String input = sc.nextLine().trim().toUpperCase();
             isOk = input.equals("O");
@@ -220,11 +248,15 @@ public class AppClient implements ConstantColors{
         SystemUtils.storeAppProperties(prop); //Sauvegarde les Configs
     }
 
+    /**
+     * Créer les dossiers nécessaires au fonctionnement de l'application
+     */
     private static void installFile(){
         Properties prop = getProperties("application");
         File serFiles = new File(prop.getProperty("app.userSerFile"));
         if(!serFiles.exists()) serFiles.mkdir();
     }
+
 
 }
 

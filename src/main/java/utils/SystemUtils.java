@@ -12,8 +12,9 @@ import java.util.Properties;
 public class SystemUtils {
 
     /**
-     * Méthode pour récupérer les propriétés d'un fichier de configuration'
+     * Méthode pour récupérer les propriétés d'un fichier de configuration
      *
+     * @param pFile nom du fichier de configuration (server ou application)
      * @return Properties
      * @throws RuntimeException si une erreur survient lors de la récupération des propriétés
      */

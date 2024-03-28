@@ -9,7 +9,7 @@ import java.util.Objects;
  * Hérite de la classe User.
  */
 public class UserClient extends User {
-    private ArrayList<File> listFile; // Liste des fichiers à sauvegarder pour cet utilisateur
+    private final ArrayList<File> listFile; // Liste des fichiers à sauvegarder pour cet utilisateur
 
     /**
      * Constructeur de la classe UserClient.
@@ -22,6 +22,10 @@ public class UserClient extends User {
         this.listFile = new ArrayList<File>();
     }
 
+    /**
+     * Getter
+     * @return la liste des repertoires a sauvegarder
+     */
     public ArrayList<File> getListFile() {
         return listFile;
     }

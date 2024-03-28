@@ -9,15 +9,17 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import static utils.FileUtils.listerFichiers;
+
 /**
  * Class pour gérer les accès au socket entre le client et le server.
  * Propose des méthodes pour communiquer avec le serveur.
  */
 public class SocketConnection {
-    private UserClient user; //Utilisateur courant
-    private Socket socket;
-    private ObjectOutputStream soos; //Flux d'écriture
-    private ObjectInputStream sisr; //Flux de lecture
+    private final UserClient user; //Utilisateur courant
+    private final Socket socket;
+    private final ObjectOutputStream soos; //Flux d'écriture
+    private final ObjectInputStream sisr; //Flux de lecture
 
     /**
      * Constructeur, établie la connection entre le client et le serveur.
@@ -67,7 +69,7 @@ public class SocketConnection {
     }
 
     /**
-     * Envoie une requete pour récupérer des informations sur la date d'un fichier
+     * Envoie une request pour récupérer des informations sur la date d'un fichier
      * Attend un long de la part du serveur.
      * @param fileName nom du fichier.
      * @return date de modification du fichier renvoyé par le serveur.
@@ -76,8 +78,7 @@ public class SocketConnection {
     public synchronized long getFileInfo(String fileName) throws IOException {
         Message message = new Message(user.getName(),Command.GetInfoFile,fileName);
         soos.writeObject(message);
-        long response = sisr.readLong();
-        return response;
+        return sisr.readLong();
     }
 
     /**
@@ -90,8 +91,10 @@ public class SocketConnection {
         for (Object[] pair : list) {
             String chemin = (String) pair[0];
             File fichier = (File) pair[1];
+
             Message saveFileMessage = new Message(user.getName(), Command.SaveFile,chemin);
-            soos.writeObject(saveFileMessage);
+            soos.writeObject(saveFileMessage); // Envoie un message avant d'envoyer le fichier
+
             try (FileInputStream fis = new FileInputStream(fichier)) {
                 byte[] buffer = new byte[8192];
                 int bytesRead;
@@ -103,14 +106,20 @@ public class SocketConnection {
         }
     }
 
+    /**
+     * Envoie une requête au serveur pour récupérer la liste des fichiers personnel.
+     * @return Un string de l'arborescence de la liste des fichiers.
+     * @throws IOException erreur sur les flux d'I/O
+     */
     public synchronized String getFileList() throws IOException {
         Message message = new Message(user.getName(),Command.ListFiles,"");
-        soos.writeObject(message);
+        soos.writeObject(message); //Envoie un message au serveur.
 
         BufferedReader br = new BufferedReader(new InputStreamReader(this.sisr));
 
         StringBuilder responseBuilder = new StringBuilder();
         String line;
+        //Lit la réponse du serveur.
         while(!Objects.equals(line = br.readLine(), "END")) {
             responseBuilder.append(line).append("\n");
         }
@@ -122,7 +131,7 @@ public class SocketConnection {
      * @param fileName Sous la forme Archives/xx/xx/file.txt ou xx/xx/file.txt
      * @param dest Emplacement ou copier le fichier.
      * @return true si le fichier a bien été télécharger et bien copier.
-     * @throws IOException
+     * @throws IOException erreur sur les flux
      */
     public synchronized boolean downloadFile(String fileName,String dest) throws IOException {
         File destFile = new File(dest);
@@ -141,51 +150,6 @@ public class SocketConnection {
                 fos.write(buffer, 0, bytesRead);
             }
             return true;
-        }
-    }
-
-    //Méthode PRIVATE
-
-    //TODO / déplacer dans FileUtils ? ...
-    /**
-     * Algorithme récursif qui sépare un dossier en plusieurs fichiers et crée des couples (Chemin - Fichier),
-     * en conservant un chemin relatif par rapport au dossier initial.
-     *
-     * @param dossier Répertoire contenant des fichiers et d'autres dossiers.
-     * @return Une ArrayList de couples (Chemin - Fichier).
-     */
-    private static ArrayList<Object[]> listerFichiers(File dossier) {
-        ArrayList<Object[]> files = new ArrayList<>();
-        listerFichiersRecursif(dossier, dossier.getName(), files);
-        return files;
-    }
-
-    /**
-     * Algorithme récursif pour parcourir les fichiers et les dossiers de manière récursive.
-     *
-     * @param dossier Dossier à parcourir.
-     * @param cheminRelatif Chemin relatif au dossier initial.
-     * @param files Liste pour stocker les couples (Chemin - Fichier).
-     */
-    private static void listerFichiersRecursif(File dossier, String cheminRelatif, ArrayList<Object[]> files) {
-        if (dossier.isDirectory()) {
-            File[] contenu = dossier.listFiles();
-            if (contenu != null) {
-                for (File element : contenu) {
-                    String cheminRelatifElement = cheminRelatif + File.separator + element.getName();
-                    if (element.isDirectory()) {
-                        // Rappel récursif pour explorer le contenu du sous-dossier
-                        listerFichiersRecursif(element, cheminRelatifElement, files);
-                    } else {
-                        // Ajouter la paire de chaîne de caractères et objet File à la liste
-                        Object[] pair = {cheminRelatifElement, element};
-                        files.add(pair);
-                    }
-                }
-            }
-        } else {
-            Object[] pair = {cheminRelatif, dossier};
-            files.add(pair);
         }
     }
 

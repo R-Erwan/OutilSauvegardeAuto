@@ -1,6 +1,7 @@
 package client.shell;
 
 import client.fileTools.AppClient;
+import utils.Colors;
 import utils.FileUtils;
 
 import java.io.File;
@@ -12,15 +13,15 @@ import static utils.SystemUtils.getProperties;
 
 /**
  * Gère les commandes utilisateur lié aux objets User de l'application.
- * Ajouts de fichiers à sauvegarder. 'process addFile pathFile'
- * Suppression de fichiers à sauvegarder. 'process delFile fileName'
- * Vider la liste des fichiers à sauvegarder. 'process clearFile'
- * Liste des fichiers utilisateur. 'process listFile'
  */
 public class UserCommandHandler implements CommandHandler {
 
-    private AppClient app;
+    private final AppClient app;
 
+    /**
+     * Constructeur
+     * @param app application courante.
+     */
     public UserCommandHandler(AppClient app){
         this.app = app;
     }
@@ -33,15 +34,14 @@ public class UserCommandHandler implements CommandHandler {
         }
 
         if(parts.length == 1){
-            displayHelp(0);
+            displayHelp();
+            return true;
         } else {
             if(parts.length == 2){
                 switch (parts[1]){
                     case "listFile" -> printListFile(true);
                     case "clearFile" -> clearUserFile();
                     default -> {
-                        System.out.println("Argument : '"+parts[1]+"' incorrect.");
-                        displayHelp(0);
                         return false;
                     }
 
@@ -52,34 +52,39 @@ public class UserCommandHandler implements CommandHandler {
                     case "delFile" -> delUserFile(parts[2]);
                     case "showFile" -> showFile(parts[2]);
                     default -> {
-                        System.out.println("Argument : '"+parts[1]+"' incorrect.");
-                        displayHelp(0);
                         return false;
                     }
                 }
             }
         }
-
         return true;
     }
 
+    /**
+     * Affiche des informations sur un dossier enregistre dans la liste utilisateur.
+     * @param part Nom du fichier.
+     */
     private void showFile(String part) {
         if(app.getUser().getListFile().contains(new File(part))){
             System.out.println(FileUtils.stringifyDirectory(new File(part)));
         } else {
-            System.out.println("Le fichier : "+part+" n'existe pas ou est renseigner differemment.\n Essayer"+GREEN+"'process listFile'. "+RESET);
+            System.out.println("Le fichier : "+part+" n'existe pas ou est renseigner différemment.\n Essayer"+Colors.GREEN+"'process listFile'. "+Colors.RESET);
         }
     }
 
+    /**
+     * Affiche la liste des dossiers enregistrés.
+     * @param full true, affiche toute l'arborescence, false affiche juste les noms de dossier parent.
+     */
     private void printListFile(boolean full){
         System.out.println("Liste fichier :");
 
         if(app.getUser().getListFile().isEmpty()){
-            System.out.println(CYAN+"[vide]"+RESET);
+            System.out.println(Colors.CYAN+"[vide]"+Colors.RESET);
         } else {
             if(!full){
 
-                System.out.println(CYAN+app.getUser().getListFile().toString()+RESET);
+                System.out.println(Colors.CYAN+app.getUser().getListFile().toString()+Colors.RESET);
             } else {
                 for (File file : app.getUser().getListFile()){
                     System.out.println(FileUtils.stringifyDirectory(file));
@@ -89,6 +94,10 @@ public class UserCommandHandler implements CommandHandler {
 
     }
 
+    /**
+     * Supprime un dossier enregistré de la liste.
+     * @param part Chemin du dossier.
+     */
     private void delUserFile(String part) {
         File file = new File(part);
         Properties prop = getProperties("application");
@@ -105,6 +114,11 @@ public class UserCommandHandler implements CommandHandler {
 
     }
 
+
+    /**
+     * Ajoute un dossier dans la liste.
+     * @param part Chemin du dossier.
+     */
     private void addUserFile(String part) {
          File file = new File(part);
          if(file.exists()){
@@ -116,7 +130,7 @@ public class UserCommandHandler implements CommandHandler {
                      app.getUser().addFileToSave(file);
                      app.getUser().write(getProperties("application").getProperty("app.userSerFile"));
                      //TODO : print l'ensemble des sous-fichier ajouter avec une fonction FileUtils
-                     System.out.println("Le fichier : "+CYAN+file.getName()+RESET+" a été ajouter a la liste");
+                     System.out.println("Le fichier : "+Colors.CYAN+file.getName()+Colors.RESET+" a été ajouter a la liste");
                  } catch (FileNotFoundException e){
                      //Normalement déja traité plus haut
                      System.out.println("Fichier introuvable");
@@ -125,12 +139,15 @@ public class UserCommandHandler implements CommandHandler {
          } else {
              System.out.println("Le chemin spécifié est introuvable");
          }
-         app.getfCheck().check();
+//         app.getfCheck().check();
     }
 
+    /**
+     * Réinitialise la liste de dossier.
+     */
     private void clearUserFile() {
         Scanner sc = new Scanner(System.in);
-        System.out.println("Cette action " + ORANGE + "est IRREVERSIBLE ! " + RESET + "L'ensemble des fichier a garder en sauvegarde sera supprimer");
+        System.out.println("Cette action " + Colors.ORANGE + "est IRREVERSIBLE ! " + Colors.RESET + "L'ensemble des fichier a garder en sauvegarde sera supprimer");
         String userResp;
         do {
             System.out.print("> Confirmer ? o/n");
@@ -147,14 +164,17 @@ public class UserCommandHandler implements CommandHandler {
 
     }
 
+    /**
+     * Affiche la liste des commandes
+     */
     @Override
-    public void displayHelp(int n) {
-        System.out.println("- "+CYAN+"process"+RESET+" : Affiche ces informations.");
-        System.out.println("- "+CYAN+"process listFile"+RESET+" : Détails des fichiers déja enregistrer");
-        System.out.println("- "+CYAN+"process clearFile"+RESET+" : Vide totalement la liste de fichier");
-        System.out.println("- "+CYAN+"process addFile filePath"+RESET+" : Ajoute le fichier a la liste de fichier");
-        System.out.println("- "+CYAN+"process delFile filePath"+RESET+" : Supprime un fichier de la liste de fichier");
-        System.out.println("- "+CYAN+"process showFile filePath"+RESET+" : Détails sur un fichier");
+    public void displayHelp() {
+        System.out.println("- "+Colors.CYAN+"process"+Colors.RESET+" : Affiche ces informations.");
+        System.out.println("- "+Colors.CYAN+"process listFile"+Colors.RESET+" : Détails des fichiers déja enregistrer");
+        System.out.println("- "+Colors.CYAN+"process clearFile"+Colors.RESET+" : Vide totalement la liste de fichier");
+        System.out.println("- "+ Colors.CYAN+"process showFile filePath"+Colors.RESET+" : Détails sur un fichier");
+        System.out.println("- "+Colors.CYAN+"process addFile filePath"+Colors.RESET+" : Ajoute le fichier a la liste de fichier");
+        System.out.println("- "+Colors.CYAN+"process delFile filePath"+Colors.RESET+" : Supprime un fichier de la liste de fichier");
     }
     
 }

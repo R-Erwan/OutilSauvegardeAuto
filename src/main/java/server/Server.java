@@ -44,9 +44,9 @@ public class Server {
         while (clients.size() < maxClients){
             Socket socket = serverS.accept(); // Attend une connexion entrante
             Client client = new Client(socket,clients); // Crée un nouveau client pour gérer la connexion
+            clients.add(client); // Ajoute le client à la liste des clients connectés
             System.out.println("Nouvelle connection - Socket :" + socket);
             System.out.println("Nombres de clients : "+clients.size());
-            clients.add(client); // Ajoute le client à la liste des clients connectés
             client.start(); // Démarre le thread du client pour gérer la communication avec lui
         }
     }
