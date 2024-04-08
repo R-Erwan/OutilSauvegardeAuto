@@ -231,6 +231,13 @@ public class ClientConnexion extends Thread {
                 LocalDate.now().getDayOfMonth() + "/";
         // archivePath -> Archives/2024/March/24
 
+        if(file.getParent() != null){
+            File firstParent = new File(userPath + file.getParent().substring(0,file.getParent().indexOf('/')+1));
+            if(firstParent.exists()){
+                firstParent.setLastModified(Instant.now().toEpochMilli());
+            }
+        }
+
         String newPath = userPath + archivePath;
         // newPath -> Server/Data/toto/Archives/2024/March/24/
 
